@@ -78,8 +78,6 @@ library(gridExtra)
 data$date<-ymd(data$date)
 data$month<-as.factor(month(data$date, label = TRUE))
 data$day<-as.factor(day(data$date))
-#data$minutes<-minutes(data$interval)
-
 ```
 
 
@@ -110,8 +108,8 @@ ggplot(total_steps_day, aes(x=total_steps_each_day))+
 3. Calculate and report the mean and median of the total number of steps taken per day
 What is the average daily activity pattern?
 ```{r}
-mean_total_steps<-mean(total_steps_day$total_steps)
-median_total_steps<-median(total_steps_day$total_steps)
+mean_total_steps<-mean(total_steps_day$total_steps_each_day, na.rm = TRUE)
+median_total_steps<-median(total_steps_day$total_steps_each_day, na.rm = TRUE)
 print(c("mean total steps per day =", mean_total_steps))
 print(c("median total steps per day =", median_total_steps))
 ```
@@ -172,10 +170,34 @@ grid.arrange(plot_with_na,plot_no_na, ncol=1)
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 ```{r}
-ggplot(data_na.rm%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE)), aes(x=total_steps_each_day))+
-        geom_histogram(bins = 100)
-```
+#plots showing distribution of total number of steps by day from data with and without NAs 
+dist_with_na<-ggplot(total_steps_day, aes(x=total_steps_each_day))+
+        geom_histogram(bins = 100)+
+        labs(title="Mean Total Steps per Day with NAs")
 
+dist_without_na<-ggplot(data_na.rm%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE)), aes(x=total_steps_each_day))+
+        geom_histogram(bins = 100)+
+        labs(title="Mean Total Steps per Day without NAs")
+
+grid.arrange(dist_with_na, dist_without_na, ncol=1)
+```
+```{r}
+# determine total steps per day from data set without NAs
+total_steps_day_no_NA<-data_na.rm%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE))
+
+#create a data.frame
+df<-data.frame(mean_total_steps_with_NA, median_total_steps_with_NA, mean_total_steps_no_NA, median_total_steps_no_NA)
+
+df$mean_total_steps_with_NA<-mean(total_steps_day$total_steps_each_day, na.rm = TRUE)
+df$median_total_steps_with_NA<-median(total_steps_day$total_steps_each_day, na.rm = TRUE)
+df$mean_total_steps_no_NA<-mean(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE)
+df$median_total_steps_no_NA<-median(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE)
+
+df<-gather(df, "statistic", "value", 1:4)
+print(df)
+#data.frame(c(mean_total_steps_with_NA, mean_total_steps_no_NA, median_total_steps_with_NA, median_total_steps_no_NA))
+
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
