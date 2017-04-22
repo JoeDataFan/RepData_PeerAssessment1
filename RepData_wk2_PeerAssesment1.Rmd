@@ -1,0 +1,199 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+
+#Peer-graded Assignment: Course Project 1
+
+##Introduction
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the "quantified self" movement group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+The data for this assignment can be downloaded from the course web site:
+. Dataset:.Activity monitoring data.[52K]
+The variables included in this dataset are:
+. steps: Number of steps taking in a 5-minute interval (missing values are coded as.NA)
+. date: The date on which the measurement was taken in YYYY-MM-DD format
+. interval: Identifier for the 5-minute interval in which measurement was taken
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
+Review criterialess.
+Repo
+1. Valid GitHub URL
+2. At least one commit beyond the original fork
+3. Valid SHA-1
+4. SHA-1 corresponds to a specific commit
+Commit containing full submission
+	1. Code for reading in the dataset and/or processing the data
+	2. Histogram of the total number of steps taken each day
+	3. Mean and median number of steps taken each day
+	4. Time series plot of the average number of steps taken
+	5. The 5-minute interval that, on average, contains the maximum number of steps
+	6. Code to describe and show a strategy for imputing missing data
+	7. Histogram of the total number of steps taken each day after missing values are imputed
+	8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+	9. All of the R code needed to reproduce the results (numbers, plots, etc.) in the report
+Assignmentless.
+This assignment will be described in multiple parts. You will need to write a report that answers the questions detailed below. Ultimately, you will need to complete the entire assignment in a single R markdown document that can be processed by knitr and be transformed into an HTML file.
+Throughout your report make sure you always include the code that you used to generate the output you present. When writing code chunks in the R markdown document, always use echo = TRUE so that someone else will be able to read the code.This assignment will be evaluated via peer assessment so it is essential that your peer evaluators be able to review the code for your analysis.
+For the plotting aspects of this assignment, feel free to use any plotting system in R (i.e., base, lattice, ggplot2)
+Fork/clone the GitHub repository created for this assignment. You will submit this assignment by pushing your completed files into your forked repository on GitHub. The assignment submission will consist of the URL to your GitHub repository and the SHA-1 commit ID for your repository state.
+NOTE: The GitHub repository also contains the dataset for the assignment so you do not have to download the data separately.
+Loading and preprocessing the data
+Show any code that is needed to
+
+## Loading and preprocessing the data
+1. Load the data (i.e. read.csv())
+```{r}
+#start by removing all current objects
+rm(list=ls())
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(data.table)
+library(lubridate)
+library(gridExtra)
+
+### read in data and clean up data
+        #set working directory to folder containing csv file
+        setwd("~/Joe's stuff/Stats and data analysis/R code and data/Reproducible Research - Coursera/RepData_PeerAssessment1")
+
+        #import excel file containing IB data
+        data<-read.csv(unzip("activity.zip"))
+        download.data.date<-Sys.time()
+        print(download.data.date)
+        
+        str(data)
+        head(data)
+        table(sum(is.na(data)))
+        
+```
+2. Process/transform the data (if necessary) into a format suitable for your analysis
+```{r}
+#create factor variables for month and day
+data$date<-ymd(data$date)
+data$month<-as.factor(month(data$date, label = TRUE))
+data$day<-as.factor(day(data$date))
+#data$minutes<-minutes(data$interval)
+
+```
+
+
+## What is mean total number of steps taken per day?
+What is mean total number of steps taken per day?
+For this part of the assignment, you can ignore the missing values in the dataset.
+```{r}
+total_steps_day<-data%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE))
+mean(total_steps_day$total_steps_each_day, na.rm=TRUE)
+```
+1. Calculate the total number of steps taken per day
+```{r}
+#plot showing total number of steps by day ignoring NAs 
+ggplot(data%>%group_by(month, day)%>%summarize(total_steps=sum(steps, na.omit=TRUE)), aes(x=day, y=total_steps, fill=month))+
+        facet_grid(.~month)+
+        geom_bar(stat="identity")+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+2. If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
+```{r}
+#plot showing total number of steps by day ignoring NAs 
+ggplot(total_steps_day, aes(x=total_steps_each_day))+
+        geom_histogram(bins = 100)
+```
+
+
+## What is the average daily activity pattern?
+3. Calculate and report the mean and median of the total number of steps taken per day
+What is the average daily activity pattern?
+```{r}
+mean_total_steps<-mean(total_steps_day$total_steps)
+median_total_steps<-median(total_steps_day$total_steps)
+print(c("mean total steps per day =", mean_total_steps))
+print(c("median total steps per day =", median_total_steps))
+```
+
+1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+
+ggplot(data%>%group_by(interval)%>%summarize(mean_steps=mean(steps, na.rm=TRUE)), aes(x=interval, y=mean_steps))+
+        geom_line()+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+mean_int_steps<-data%>%group_by(interval)%>%summarize(mean_interval_steps=mean(steps, na.rm=TRUE))
+arrange(mean_int_steps, desc(mean_interval_steps))%>%slice(1)
+```
+
+
+## Imputing missing values
+Imputing missing values
+Note that there are a number of days/intervals where there are missing values (coded as.NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+table(sum(is.na(data)))
+```
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r}
+# determine mean steps per interval then use this value to replace NAs in that interval
+# first determine mean steps for each interval
+        # did this up above... mean_int_steps
+# combine mean steps by interval with data dataframe so all intervals have mean value for that interval
+data<-full_join(data, mean_int_steps, by="interval")
+
+# if steps is NA then replace with mean steps that equals the same interval
+# this is done by simply identifying NA then replacing with the mean_interval_steps in the same row
+data_na.rm<-transform(data, steps=ifelse(is.na(steps),data$mean_interval_steps[is.na(data$steps)], steps))
+
+# check for NAs
+table(sum(is.na(data_na.rm)))
+
+# look at the plot of the data to make sure 
+plot_with_na<-ggplot(data%>%group_by(month, day)%>%summarize(total_steps=sum(steps, na.rm=TRUE)), aes(x=day, y=total_steps, fill=month))+
+        facet_grid(.~month)+
+        geom_bar(stat="identity")+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+plot_no_na<-ggplot(data_na.rm%>%group_by(month, day)%>%summarize(total_steps=sum(steps, na.rm=TRUE)), aes(x=day, y=total_steps, fill=month))+
+        facet_grid(.~month)+
+        geom_bar(stat="identity")+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+grid.arrange(plot_with_na,plot_no_na, ncol=1)
+```
+
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```{r}
+ggplot(data_na.rm%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE)), aes(x=total_steps_each_day))+
+        geom_histogram(bins = 100)
+```
+
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+Are there differences in activity patterns between weekdays and weekends?
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+	1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+	2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+Submitting the Assignmentless
+```{r}
+data_na.rm$week <- ifelse(weekdays(data_na.rm$date) %in% c("Saturday", "Sunday"), "weekend", "weekday")
+data_na.rm$week<-as.factor(data_na.rm$week)
+```
+```{r}
+
+ggplot(data_na.rm%>%group_by(week,interval)%>%summarize(mean_steps=mean(steps, na.rm=TRUE)), aes(x=interval, y=mean_steps))+
+        facet_grid(week~.)+
+        geom_line()+
+        theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
