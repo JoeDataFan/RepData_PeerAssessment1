@@ -5,47 +5,32 @@ output:
     keep_md: true
 ---
 
-#Peer-graded Assignment: Course Project 1
-
 ##Introduction
 It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the "quantified self" movement group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
 
 This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
-The data for this assignment can be downloaded from the course web site:
-. Dataset:.Activity monitoring data.[52K]
-The variables included in this dataset are:
-. steps: Number of steps taking in a 5-minute interval (missing values are coded as.NA)
-. date: The date on which the measurement was taken in YYYY-MM-DD format
-. interval: Identifier for the 5-minute interval in which measurement was taken
+##Methods
+The data for this assignment is located in the same repository as this Rmarkdown file:  
+* Dataset = activity.zip  
+The variables included in this dataset are:  
+1. steps: Number of steps taking in a 5-minute interval (missing values are coded as.NA)  
+2. date: The date on which the measurement was taken in YYYY-MM-DD format  
+3. interval: Identifier for the 5-minute interval in which measurement was taken  
 The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
-Review criterialess.
-Repo
-1. Valid GitHub URL
-2. At least one commit beyond the original fork
-3. Valid SHA-1
-4. SHA-1 corresponds to a specific commit
-Commit containing full submission
-	1. Code for reading in the dataset and/or processing the data
-	2. Histogram of the total number of steps taken each day
-	3. Mean and median number of steps taken each day
-	4. Time series plot of the average number of steps taken
-	5. The 5-minute interval that, on average, contains the maximum number of steps
-	6. Code to describe and show a strategy for imputing missing data
-	7. Histogram of the total number of steps taken each day after missing values are imputed
-	8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
-	9. All of the R code needed to reproduce the results (numbers, plots, etc.) in the report
-Assignmentless.
-This assignment will be described in multiple parts. You will need to write a report that answers the questions detailed below. Ultimately, you will need to complete the entire assignment in a single R markdown document that can be processed by knitr and be transformed into an HTML file.
-Throughout your report make sure you always include the code that you used to generate the output you present. When writing code chunks in the R markdown document, always use echo = TRUE so that someone else will be able to read the code.This assignment will be evaluated via peer assessment so it is essential that your peer evaluators be able to review the code for your analysis.
-For the plotting aspects of this assignment, feel free to use any plotting system in R (i.e., base, lattice, ggplot2)
-Fork/clone the GitHub repository created for this assignment. You will submit this assignment by pushing your completed files into your forked repository on GitHub. The assignment submission will consist of the URL to your GitHub repository and the SHA-1 commit ID for your repository state.
-NOTE: The GitHub repository also contains the dataset for the assignment so you do not have to download the data separately.
-Loading and preprocessing the data
-Show any code that is needed to
+
+The following procedures were performed during analysis:
+1. Read in the data set and added month and day factor variables   
+2. Created a histogram of the total number of steps taken each day   
+3. Calculated Mean and median number of steps taken each day   
+4. Created a time series plot of the average number of steps taken in each time interval   
+5. Determined the 5-minute interval that, on average, contains the maximum number of steps     
+6. Created code to impute missing data (NA) with the average steps for the given 5 minute interval   
+7. Create a histogram of the total number of steps taken each day after missing values are imputed   
+8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends   
+
 
 ## Loading and preprocessing the data
-1. Load the data (i.e. read.csv())
 ```{r}
 #start by removing all current objects
 rm(list=ls())
@@ -57,6 +42,7 @@ library(reshape2)
 library(data.table)
 library(lubridate)
 library(gridExtra)
+library(xtable)
 
 ### read in data and clean up data
         #set working directory to folder containing csv file
@@ -66,13 +52,13 @@ library(gridExtra)
         data<-read.csv(unzip("activity.zip"))
         download.data.date<-Sys.time()
         print(download.data.date)
-        
-        str(data)
-        head(data)
-        table(sum(is.na(data)))
+# code to check structure and NAs in data       
+        #str(data)
+        #head(data)
+        #table(sum(is.na(data)))
         
 ```
-2. Process/transform the data (if necessary) into a format suitable for your analysis
+####Process/transform the data into a format suitable for analysis
 ```{r}
 #create factor variables for month and day
 data$date<-ymd(data$date)
@@ -80,13 +66,11 @@ data$month<-as.factor(month(data$date, label = TRUE))
 data$day<-as.factor(day(data$date))
 ```
 
-
 ## What is mean total number of steps taken per day?
-What is mean total number of steps taken per day?
-For this part of the assignment, you can ignore the missing values in the dataset.
+For this part of the assignment NAs were ignored.
 ```{r}
 total_steps_day<-data%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE))
-mean(total_steps_day$total_steps_each_day, na.rm=TRUE)
+mean_total_steps<-mean(total_steps_day$total_steps_each_day, na.rm=TRUE)
 ```
 1. Calculate the total number of steps taken per day
 ```{r}
@@ -102,17 +86,14 @@ ggplot(data%>%group_by(month, day)%>%summarize(total_steps=sum(steps, na.omit=TR
 ggplot(total_steps_day, aes(x=total_steps_each_day))+
         geom_histogram(bins = 100)
 ```
-
-
 ## What is the average daily activity pattern?
 3. Calculate and report the mean and median of the total number of steps taken per day
 What is the average daily activity pattern?
 ```{r}
 mean_total_steps<-mean(total_steps_day$total_steps_each_day, na.rm = TRUE)
 median_total_steps<-median(total_steps_day$total_steps_each_day, na.rm = TRUE)
-print(c("mean total steps per day =", mean_total_steps))
-print(c("median total steps per day =", median_total_steps))
 ```
+The mean total steps per day was `r round(mean_total_steps)` and the median total steps per day were `r median_total_steps`.
 
 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 ```{r}
@@ -124,8 +105,7 @@ ggplot(data%>%group_by(interval)%>%summarize(mean_steps=mean(steps, na.rm=TRUE))
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 ```{r}
-mean_int_steps<-data%>%group_by(interval)%>%summarize(mean_interval_steps=mean(steps, na.rm=TRUE))
-arrange(mean_int_steps, desc(mean_interval_steps))%>%slice(1)
+mean_int_steps<-data%>%group_by(interval)%>%summarize(mean_interval_steps=mean(steps, na.rm=TRUE))%>%arrange(desc(mean_interval_steps))%>%slice(1)
 ```
 
 
@@ -186,13 +166,24 @@ grid.arrange(dist_with_na, dist_without_na, ncol=1)
 total_steps_day_no_NA<-data_na.rm%>%group_by(date)%>%summarize(total_steps_each_day=sum(steps, na.rm=TRUE))
 
 #create a data.frame
-df<-data.frame(mean_total_steps_with_NA, median_total_steps_with_NA, mean_total_steps_no_NA, median_total_steps_no_NA)
+#df<-data.frame(mean_total_steps_with_NA=numeric(), median_total_steps_with_NA=numeric(), mean_total_steps_no_NA=numeric(), median_total_steps_no_NA=numeric(), stringsAsFactors = F)
 
-df$mean_total_steps_with_NA<-mean(total_steps_day$total_steps_each_day, na.rm = TRUE)
-df$median_total_steps_with_NA<-median(total_steps_day$total_steps_each_day, na.rm = TRUE)
-df$mean_total_steps_no_NA<-mean(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE)
-df$median_total_steps_no_NA<-median(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE)
+df<-data.frame(ncol=4, nrow=1)
 
+#df = data.frame(matrix(vector(), 0, 4,
+   #             dimnames=list(c(), c("mean_total_steps_with_NA", "median_total_steps_with_NA", "mean_total_steps_no_NA", "median_total_steps_no_NA"))),
+    #            stringsAsFactors=F)
+meantotal_steps_with_NA<-as.numeric(mean(total_steps_day$total_steps_each_day, na.rm = TRUE))
+median_total_steps_with_NA<-as.numeric(median(total_steps_day$total_steps_each_day, na.rm = TRUE))
+mean_total_steps_no_NA<-as.numeric(mean(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE))
+median_total_steps_no_NA<-as.numeric(median(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE))
+
+df$mean_total_steps_with_NA<-as.numeric(mean(total_steps_day$total_steps_each_day, na.rm = TRUE))
+df$median_total_steps_with_NA<-as.numeric(median(total_steps_day$total_steps_each_day, na.rm = TRUE))
+df$mean_total_steps_no_NA<-as.numeric(mean(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE))
+df$median_total_steps_no_NA<-as.numeric(median(total_steps_day_no_NA$total_steps_each_day, na.rm = TRUE))
+
+df<-select(df, -c(ncol,nrow))
 df<-gather(df, "statistic", "value", 1:4)
 print(df)
 #data.frame(c(mean_total_steps_with_NA, mean_total_steps_no_NA, median_total_steps_with_NA, median_total_steps_no_NA))
@@ -217,5 +208,3 @@ ggplot(data_na.rm%>%group_by(week,interval)%>%summarize(mean_steps=mean(steps, n
         geom_line()+
         theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-
-
